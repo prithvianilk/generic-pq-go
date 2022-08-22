@@ -19,10 +19,10 @@ func (pq *PriorityQueue[T]) Push(value T) bool {
 		return false
 	}
 	pq.values[pq.size] = value
-	i, j := pq.size, parent(pq.size)
-	for i > 0 && pq.values[i] > pq.values[j] {
-		pq.values[i], pq.values[j] = pq.values[j], pq.values[i]
-		i, j = j, parent(j)
+	index, par := pq.size, parent(pq.size)
+	for index > 0 && pq.values[index] > pq.values[par] {
+		pq.swapValues(index, par)
+		index, par = par, parent(par)
 	}
 	pq.size++
 	return true
@@ -34,15 +34,15 @@ func (pq *PriorityQueue[T]) Pop() bool {
 	}
 	pq.size--
 	pq.values[0] = pq.values[pq.size]
-	i := 0
-	for !pq.isLeaf(i) {
-		l, r := children(i)
-		if pq.isRightValid(i) {
-			pq.values[r], pq.values[i] = pq.values[i], pq.values[r]
-			i = r
-		} else if pq.isLeftValid(l, i) {
-			pq.values[l], pq.values[i] = pq.values[i], pq.values[l]
-			i = l
+	index := 0
+	for !pq.isLeaf(index) {
+		leftChild, rightChild := children(index)
+		if pq.isRightValid(index) {
+			pq.swapValues(index, rightChild)
+			index = rightChild
+		} else if pq.isLeftValid(index) {
+			pq.swapValues(index, leftChild)
+			index = leftChild
 		} else {
 			break
 		}
@@ -70,26 +70,34 @@ func parent(index int) int {
 	return (index - 1) / 2
 }
 
+func (pq *PriorityQueue[T]) swapValues(i int, j int) {
+	pq.values[j], pq.values[i] = pq.values[i], pq.values[j]
+}
+
 func children(index int) (int, int) {
-	return ((index * 2) + 1), ((index * 2) + 2)
+	leftChild := (index * 2) + 1
+	rightChild := (index * 2) + 2
+	return leftChild, rightChild
 }
 
 func (pq *PriorityQueue[T]) isLeaf(index int) bool {
-	return ((2 * index) + 1) >= pq.size
+	leftChild := (2 * index) + 1
+	return leftChild >= pq.size
 }
 
-func (pq *PriorityQueue[T]) isLeftValid(l int, i int) bool {
-	isLeftValid := pq.values[l] > pq.values[i]
-	return isLeftValid
-}
-
-func (pq *PriorityQueue[T]) isRightValid(i int) bool {
-	l, r := children(i)
-	isRightIndexable := r < pq.size
-	if !isRightIndexable {
+func (pq *PriorityQueue[T]) isRightValid(index int) bool {
+	leftChild, rightChild := children(index)
+	isRightInRange := rightChild < pq.size
+	if !isRightInRange {
 		return false
 	}
-	isRightBiggerThanCurr := pq.values[r] > pq.values[i]
-	isRightBiggerThanLeft := pq.values[r] > pq.values[l]
+	isRightBiggerThanCurr := pq.values[rightChild] > pq.values[index]
+	isRightBiggerThanLeft := pq.values[rightChild] > pq.values[leftChild]
 	return isRightBiggerThanLeft && isRightBiggerThanCurr
+}
+
+func (pq *PriorityQueue[T]) isLeftValid(index int) bool {
+	leftChild, _ := children(index)
+	isLeftValid := pq.values[leftChild] > pq.values[index]
+	return isLeftValid
 }
