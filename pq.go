@@ -28,22 +28,14 @@ func (pq *PriorityQueue[T]) Push(value T) bool {
 	return true
 }
 
-func parent(index int) int {
-	return (index - 1) / 2
-}
-
-func children(index int) (int, int) {
-	return ((index * 2) + 1), ((index * 2) + 2)
-}
-
 func (pq *PriorityQueue[T]) Pop() bool {
 	if pq.IsEmpty() {
 		return false
 	}
 	pq.size--
-	pq.values[0], pq.values[pq.size] = pq.values[pq.size], pq.values[0]
+	pq.values[0] = pq.values[pq.size]
 	i := 0
-	for ((2 * i) + 1) < pq.size {
+	for !pq.isLeaf(i) {
 		l, r := children(i)
 		if pq.isRightValid(i) {
 			pq.values[r], pq.values[i] = pq.values[i], pq.values[r]
@@ -56,22 +48,6 @@ func (pq *PriorityQueue[T]) Pop() bool {
 		}
 	}
 	return true
-}
-
-func (pq *PriorityQueue[T]) isLeftValid(l int, i int) bool {
-	isLeftValid := pq.values[l] > pq.values[i]
-	return isLeftValid
-}
-
-func (pq *PriorityQueue[T]) isRightValid(i int) bool {
-	l, r := children(i)
-	isRightIndexable := r < pq.size
-	if !isRightIndexable {
-		return false
-	}
-	isRightBiggerThanCurr := pq.values[r] > pq.values[i]
-	isRightBiggerThanLeft := pq.values[r] > pq.values[l]
-	return isRightBiggerThanLeft && isRightBiggerThanCurr
 }
 
 func (pq *PriorityQueue[T]) Top() (T, bool) {
@@ -88,4 +64,32 @@ func (pq *PriorityQueue[T]) Size() int {
 
 func (pq *PriorityQueue[T]) IsEmpty() bool {
 	return pq.Size() == 0
+}
+
+func parent(index int) int {
+	return (index - 1) / 2
+}
+
+func children(index int) (int, int) {
+	return ((index * 2) + 1), ((index * 2) + 2)
+}
+
+func (pq *PriorityQueue[T]) isLeaf(index int) bool {
+	return ((2 * index) + 1) >= pq.size
+}
+
+func (pq *PriorityQueue[T]) isLeftValid(l int, i int) bool {
+	isLeftValid := pq.values[l] > pq.values[i]
+	return isLeftValid
+}
+
+func (pq *PriorityQueue[T]) isRightValid(i int) bool {
+	l, r := children(i)
+	isRightIndexable := r < pq.size
+	if !isRightIndexable {
+		return false
+	}
+	isRightBiggerThanCurr := pq.values[r] > pq.values[i]
+	isRightBiggerThanLeft := pq.values[r] > pq.values[l]
+	return isRightBiggerThanLeft && isRightBiggerThanCurr
 }
