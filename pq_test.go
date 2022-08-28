@@ -38,13 +38,11 @@ func compare[T any](pq PriorityQueue[T], in []T, ex []T, t *testing.T, isEqual f
 	if pq.Size() != len(ex) {
 		t.Fatal("Expected ", len(ex), "values. Got", pq.Size())
 	}
-	i := 0
-	for !pq.IsEmpty() && i < len(ex) {
+	for _, val := range ex {
 		top, ok := pq.Top()
-		if !ok || !isEqual(top, ex[i]) {
-			t.Fatal("Expected ", ex[i], ", got ", top)
+		if !ok || !isEqual(top, val) {
+			t.Fatal("Expected ", val, ", got ", top)
 		}
 		pq.Pop()
-		i++
 	}
 }
