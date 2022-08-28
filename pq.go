@@ -1,26 +1,23 @@
 package main
 
-import (
-	"golang.org/x/exp/constraints"
-)
-
-type PriorityQueue[T constraints.Ordered] struct {
-	values  []T
-	size    int
-	maxSize int
+type PriorityQueue[T any] struct {
+	values    []T
+	size      int
+	capacity  int
+	isGreater func(T, T) bool
 }
 
-func NewPriorityQueue[T constraints.Ordered](maxSize int) PriorityQueue[T] {
-	return PriorityQueue[T]{values: make([]T, maxSize), size: 0, maxSize: maxSize}
+func NewPriorityQueue[T any](isGreater func(T, T) bool, capacity int) PriorityQueue[T] {
+	return PriorityQueue[T]{values: make([]T, capacity), size: 0, capacity: capacity, isGreater: isGreater}
 }
 
 func (pq *PriorityQueue[T]) Push(value T) bool {
-	if pq.size == pq.maxSize {
+	if pq.size == pq.capacity {
 		return false
 	}
 	pq.values[pq.size] = value
 	index, par := pq.size, parent(pq.size)
-	for index > 0 && pq.values[index] > pq.values[par] {
+	for index > 0 && pq.isGreater(pq.values[index], pq.values[par]) {
 		pq.swapValues(index, par)
 		index, par = par, parent(par)
 	}
@@ -81,7 +78,7 @@ func children(index int) (int, int) {
 }
 
 func (pq *PriorityQueue[T]) isLeaf(index int) bool {
-	leftChild := (2 * index) + 1
+	leftChild, _ := children(index)
 	return leftChild >= pq.size
 }
 
@@ -91,13 +88,13 @@ func (pq *PriorityQueue[T]) isRightValid(index int) bool {
 	if !isRightInRange {
 		return false
 	}
-	isRightBiggerThanCurr := pq.values[rightChild] > pq.values[index]
-	isRightBiggerThanLeft := pq.values[rightChild] > pq.values[leftChild]
+	isRightBiggerThanCurr := pq.isGreater(pq.values[rightChild], pq.values[index])
+	isRightBiggerThanLeft := pq.isGreater(pq.values[rightChild], pq.values[leftChild])
 	return isRightBiggerThanLeft && isRightBiggerThanCurr
 }
 
 func (pq *PriorityQueue[T]) isLeftValid(index int) bool {
 	leftChild, _ := children(index)
-	isLeftValid := pq.values[leftChild] > pq.values[index]
+	isLeftValid := pq.isGreater(pq.values[leftChild], pq.values[index])
 	return isLeftValid
 }
